@@ -1126,7 +1126,11 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                       ].filter(Boolean).join(', ') || 'Rua Principal, 100, Cidade - SP'}
                     </div>
                     <div>Telefone: {companySettings?.company_phone || '(55) 97799-7979'}</div>
-                    <div>CNPJ: {companySettings?.company_cnpj || '12345678954151'}</div>
+                    {(() => {
+                      const doc = companySettings?.company_cnpj || '123.456.789-01';
+                      const isCpf = doc.replace(/\D/g, '').length <= 11;
+                      return <div>{isCpf ? 'CPF' : 'CNPJ'}: {doc}</div>;
+                    })()}
                   </div>
                 </div>
 
@@ -1165,7 +1169,11 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                       <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '12.5px' }}>
                         {printQuote.customer_name || 'Consumidor Final'}
                       </div>
-                      <div>CPF/CNPJ: {printQuote.customer_document || '000.000.000-00'}</div>
+                      {(() => {
+                        const doc = printQuote.customer_document || '000.000.000-00';
+                        const isCpf = doc.replace(/\D/g, '').length <= 11;
+                        return <div>{isCpf ? 'CPF' : 'CNPJ'}: {doc}</div>;
+                      })()}
                       <div>Celular: {printQuote.customer_phone || '(55) 9999-9999'}</div>
                       <div>{printQuote.customer_email || 'contato@cliente.com'}</div>
                     </div>
