@@ -14,8 +14,4 @@ services:
       - DATA_DIR=/app/data
       - NODE_ENV=production
     volumes:
-      # Caminho padrão relativo (ou definido via variável DATA_PATH)
-      # No ZimaOS / CasaOS, configure DATA_PATH=/DATA/AppData/precifica-3d no arquivo .env
-      # ou substitua a linha abaixo por:
-      # - /DATA/AppData/precifica-3d:/app/data
-      - ${DATA_PATH:-./data}:/app/data
+      - /DATA/AppData/precifica-3d:/app/data
