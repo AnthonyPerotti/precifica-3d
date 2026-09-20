@@ -1,0 +1,20 @@
+{
+  "name": "precifica-3d-server",
+  "version": "1.0.0",
+  "description": "Backend API for Precifica 3D - 3D Printing Cost Calculator and Management",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

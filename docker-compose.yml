@@ -1,0 +1,21 @@
+services:
+  precifica-3d:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: precifica-3d:latest
+    container_name: precifica-3d
+    restart: unless-stopped
+    ports:
+      - "5172:5172"
+    environment:
+      - PORT=5172
+      - HOST=0.0.0.0
+      - DATA_DIR=/app/data
+      - NODE_ENV=production
+    volumes:
+      # Caminho padrão relativo (ou definido via variável DATA_PATH)
+      # No ZimaOS / CasaOS, configure DATA_PATH=/DATA/AppData/precifica-3d no arquivo .env
+      # ou substitua a linha abaixo por:
+      # - /DATA/AppData/precifica-3d:/app/data
+      - ${DATA_PATH:-./data}:/app/data

@@ -1,0 +1,14 @@
+node_modules
+client/node_modules
+server/node_modules
+client/dist
+.git
+.gitignore
+.env
+data/*.sqlite
+data/*.sqlite-wal
+data/*.sqlite-shm
+uploads/*
+!uploads/.gitkeep
+!data/.gitkeep
+*.log

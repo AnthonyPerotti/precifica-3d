@@ -1,0 +1,22 @@
+{
+  "name": "precifica-3d",
+  "version": "1.0.0",
+  "description": "Precifica 3D - Sistema de Precificação e Gestão para Impressão 3D",
+  "type": "module",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "build:client": "npm --prefix client run build",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev"
+  },
+  "keywords": [
+    "3d-printing",
+    "cost-calculator",
+    "pricing",
+    "slicer",
+    "homelab",
+    "zimaos"
+  ],
+  "author": "Anthony Perotti",
+  "license": "MIT"
+}
