@@ -1237,7 +1237,7 @@ export function Settings({ onLogout }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label className="form-label">
-                  Margem de material <span title="Margem de perda com suportes, purgas e falhas" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                  Margem de material <span title="O que é?&#10;Cobre falha de primeira camada, descolamento da mesa, empenamento e desgaste por umidade do filamento.&#10;Recomendamos 20% — equivale a incluir o custo de 1 falha a cada 5 impressões.&#10;Faixa: 10% (ambiente seco) · 20% (padrão) · 30% (ambiente úmido).&#10;⚠️ Purga de troca de cor, brim, raft e suportes não entram aqui — já vêm no peso do filamento reportado pelo fatiador." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -1256,7 +1256,7 @@ export function Settings({ onLogout }) {
 
               <div className="form-group">
                 <label className="form-label">
-                  Custo por hora de impressão <span title="Depreciação e manutenção da impressora" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                  Custo por hora de impressão <span title="Amortização da impressora&#10;O quanto sua máquina “custa” por hora de uso.&#10;Preço da impressora ÷ Vida útil em horas + Manutenção.&#10;O sistema já calcula isso para você na aba 'Impressoras' se você preencher o valor de compra." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
@@ -1279,7 +1279,7 @@ export function Settings({ onLogout }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label className="form-label">
-                  Potência da impressora <span title="Consumo elétrico nominal médio" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                  Potência da impressora <span title="Consumo elétrico (Watts)&#10;Você acha essa informação na fonte da máquina ou no manual (ex: Ender 3 = 350W, Bambu A1 = 130W).&#10;Usamos para calcular quanto a impressão gasta na conta de luz." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -1298,7 +1298,7 @@ export function Settings({ onLogout }) {
 
               <div className="form-group">
                 <label className="form-label">
-                  Custo do kWh <span title="Tarifa de energia elétrica cobrada pela distribuidora" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                  Custo do kWh <span title="Sua conta de energia&#10;O valor cobrado pela concessionária por cada kWh consumido.&#10;Para achar: pegue sua conta de luz, divida o Valor Total da Fatura pelo Consumo em kWh.&#10;Ou use a caixinha abaixo para preencher com a média do seu estado." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
                 </label>
                 <div style={{ position: 'relative', marginBottom: 8 }}>
                   <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
@@ -1335,7 +1335,7 @@ export function Settings({ onLogout }) {
             {/* Row 3: Custo de montagem padrão */}
             <div className="form-group">
               <label className="form-label">
-                Custo de montagem padrão <span title="Custo ou percentual estimado para montagem" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                Custo de montagem padrão <span title="Sua mão de obra&#10;O valor da SUA HORA de trabalho manual (descolar da mesa, tirar suporte, lixar, colar, embalar).&#10;Se você quer ganhar R$3.000 por mês trabalhando 160h/mês, seu custo de montagem é ~R$18,75/h." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
               </label>
               <input
                 type="number"
@@ -1350,7 +1350,7 @@ export function Settings({ onLogout }) {
             {/* Row 4: Taxa de plataformas padrão */}
             <div className="form-group">
               <label className="form-label">
-                Taxa de plataformas padrão <span title="Taxas de marketplace (ex: Mercado Livre, Shopee)" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                Taxa de plataformas padrão <span title="Marketplaces e Cartão&#10;O percentual que fica com o Mercado Livre, Shopee, Elo7 ou maquininha de cartão.&#10;Ex: Shopee (14% a 20%), Mercado Livre (11% a 19%), Cartão de Crédito (~5%).&#10;Se você vende só no Pix/Dinheiro, deixe 0%." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
               </label>
               <input
                 type="number"
@@ -1365,7 +1365,7 @@ export function Settings({ onLogout }) {
             {/* Row 5: Impostos padrão */}
             <div className="form-group">
               <label className="form-label">
-                Impostos padrão <span title="Alíquota de imposto MEI / Simples Nacional" style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                Impostos padrão <span title="Receita Federal / Governo&#10;O imposto que você paga sobre cada venda.&#10;Se você é MEI (pagamento fixo mensal independente das vendas): deixe 0%.&#10;Se você é Simples Nacional: geralmente começa em 4% (Comércio) ou 6% (Serviço)." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
               </label>
               <input
                 type="number"
@@ -1472,7 +1472,7 @@ export function Settings({ onLogout }) {
               <div className="form-group">
                 <label className="form-label">Identificador / Link do Catálogo</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>http://localhost:3500/c/</span>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>http://localhost:5172/c/</span>
                   <input
                     type="text"
                     className="form-control"

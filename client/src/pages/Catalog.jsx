@@ -83,9 +83,18 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
       setCategories(prodRes.categories || ['Todos']);
 
       if (settingsRes?.settings) {
+        let catalogConfig = {};
+        if (settingsRes.settings.catalog_settings_json) {
+          try {
+            catalogConfig = typeof settingsRes.settings.catalog_settings_json === 'string'
+              ? JSON.parse(settingsRes.settings.catalog_settings_json)
+              : settingsRes.settings.catalog_settings_json;
+          } catch(e) {}
+        }
         setStoreSettings(prev => ({
           ...prev,
-          ...settingsRes.settings
+          ...settingsRes.settings,
+          parsedCatalogConfig: catalogConfig
         }));
       }
     } catch (err) {
@@ -95,6 +104,8 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
       setLoading(false);
     }
   };
+
+  const catalogConfig = storeSettings.parsedCatalogConfig || {};
 
   // Cart Operations
   const addToCart = (product) => {
@@ -148,7 +159,7 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
   const handleCheckoutWhatsApp = () => {
     if (cart.length === 0) return;
 
-    let phone = storeSettings.company_phone || '';
+    let phone = catalogConfig.whatsapp || storeSettings.company_phone || '';
     phone = phone.replace(/\D/g, '');
     if (phone.length === 10 || phone.length === 11) {
       phone = `55${phone}`;
@@ -258,10 +269,10 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
 
             <div>
               <h1 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                {storeSettings.company_name || 'Minha Companhia'}
+                {catalogConfig.storeName || storeSettings.company_name || 'Minha Companhia'}
               </h1>
               <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
-                Catálogo de Impressão 3D & Produtos
+                {catalogConfig.description || 'Catálogo de Impressão 3D & Produtos'}
               </p>
             </div>
           </div>
@@ -309,6 +320,7 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
       {/* Main Catalog Body */}
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 20px 80px' }}>
         {/* Search Bar (Matches reference screenshot 014442.png) */}
+        {catalogConfig.showSearch !== false && (
         <div style={{ maxWidth: '600px', margin: '0 auto 24px' }}>
           <div style={{
             display: 'flex',
@@ -346,9 +358,10 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
             )}
           </div>
         </div>
+        )}
 
         {/* Category Pills */}
-        {categories.length > 1 && (
+        {categories.length > 1 && catalogConfig.showCategories !== false && (
           <div style={{
             display: 'flex',
             alignItems: 'center',

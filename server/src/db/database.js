@@ -269,19 +269,7 @@ function seedDefaults(database) {
     insertPrinter.run('Creality Ender 3 V3', 'Ender 3 V3', 120, 1800, 3500, 0.40, 220, 220, 250, 0);
   }
 
-  // 4. Default Filaments
-  const filamentCount = database.prepare('SELECT COUNT(*) as count FROM filaments').get().count;
-  if (filamentCount === 0) {
-    const insertFilament = database.prepare(`
-      INSERT INTO filaments (name, type, brand, color_name, color_hex, density_g_cm3, spool_weight_g, price, cost_per_gram, in_stock_spools)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    insertFilament.run('eSUN PLA+ Preto', 'PLA', 'eSUN', 'Preto', '#1e293b', 1.24, 1000, 95.0, 0.095, 2);
-    insertFilament.run('eSUN PLA+ Branco', 'PLA', 'eSUN', 'Branco', '#f8fafc', 1.24, 1000, 95.0, 0.095, 1);
-    insertFilament.run('Voolt3D PETG Cinza', 'PETG', 'Voolt3D', 'Cinza', '#64748b', 1.27, 1000, 89.0, 0.089, 1);
-    insertFilament.run('Creality ABS Preto', 'ABS', 'Creality', 'Preto', '#0f172a', 1.04, 1000, 90.0, 0.090, 1);
-    insertFilament.run('eSUN TPU 95A Vermelho', 'TPU', 'eSUN', 'Vermelho', '#ef4444', 1.21, 1000, 140.0, 0.140, 1);
-  }
+  // 4. Default Filaments (Removed per user request)
 
   // 5. Default Additional Costs
   const addCostsCount = database.prepare('SELECT COUNT(*) as count FROM additional_costs').get().count;
@@ -313,102 +301,5 @@ function seedDefaults(database) {
     insertProfile.run('A1 · PETG · 0.20mm', 2, 'PETG', 0.20, 20, 180, 3, 4, 'none', 'auto');
   }
 
-  // 7. Seed 1 sample customer, product and order so the user sees a complete, working dashboard right away
-  const prodCount = database.prepare('SELECT COUNT(*) as count FROM products').get().count;
-  if (prodCount === 0) {
-    const insertProd = database.prepare(`
-      INSERT INTO products (
-        name, description, category, total_weight_g, total_print_time_min,
-        material_cost, material_margin_cost, energy_cost, machine_depreciation_cost,
-        labor_assembly_cost, additional_costs_total, unit_cost, sale_price, markup,
-        profit_gross, tax_cost, marketplace_fee_cost, profit_net, profit_margin_pct,
-        placas_json, filaments_json, additional_costs_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    insertProd.run(
-      'Chaveiro Personalizado Articulado',
-      'Chaveiro 3D articulado de alta resistência.',
-      'Chaveiros',
-      12.0,
-      35,
-      1.14,
-      0.23,
-      0.08,
-      0.15,
-      0.60,
-      0.50,
-      2.70,
-      8.00,
-      2.96,
-      5.30,
-      0.48,
-      1.28,
-      3.54,
-      44.25,
-      JSON.stringify([{
-        name: 'Placa Principal',
-        copies: 1,
-        weight_g: 12.0,
-        print_time_min: 35,
-        layer_height: 0.20
-      }]),
-      JSON.stringify([{
-        filamentId: 1,
-        name: 'eSUN PLA+ Preto',
-        weight_g: 12.0,
-        cost: 1.14
-      }]),
-      JSON.stringify([{
-        name: 'Argola de Chaveiro com Corrente',
-        qty: 1,
-        unit_cost: 0.50,
-        total: 0.50
-      }])
-    );
-  }
-
-  const custCount = database.prepare('SELECT COUNT(*) as count FROM customers').get().count;
-  if (custCount === 0) {
-    const insertCust = database.prepare(`
-      INSERT INTO customers (name, phone, email, notes)
-      VALUES (?, ?, ?, ?)
-    `);
-    insertCust.run('Lucas Fernandes', '(11) 98765-4321', 'lucas@exemplo.com', 'Cliente frequente de brindes corporativos');
-  }
-
-  const orderCount = database.prepare('SELECT COUNT(*) as count FROM orders').get().count;
-  if (orderCount === 0) {
-    const insertOrder = database.prepare(`
-      INSERT INTO orders (
-        code, customer_id, status, payment_status, payment_method, validity_days,
-        delivery_method, notes, discount_pct, discount_value, subtotal, total,
-        estimated_cost, estimated_net_profit, items_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    insertOrder.run(
-      'PED-20260901',
-      1,
-      'finalizado',
-      'pago',
-      'PIX',
-      30,
-      'Retirada no Local',
-      'Lote de 10 chaveiros entregues com sucesso.',
-      0,
-      0,
-      80.00,
-      80.00,
-      27.00,
-      48.20,
-      JSON.stringify([{
-        productId: 1,
-        name: 'Chaveiro Personalizado Articulado',
-        qty: 10,
-        unitPrice: 8.00,
-        unitCost: 2.70,
-        discount: 0
-      }])
-    );
-  }
+  // 7. Seed 1 sample customer, product and order (Removed per user request)
 }

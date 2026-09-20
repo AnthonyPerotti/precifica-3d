@@ -168,4 +168,12 @@ No primeiro acesso, utilize:
 
 ## Licenca
 
-Distribuido sob a licenca MIT.
+Distribuído sob a licença Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
+
+Você tem o direito de:
+- **Compartilhar**: copiar e redistribuir o material em qualquer suporte ou formato.
+- **Adaptar**: remixar, transformar e criar a partir do material.
+
+Sob as seguintes condições:
+- **Atribuição (BY)**: Você deve dar o crédito apropriado, prover um link para a licença e indicar se mudanças foram feitas.
+- **Uso Não Comercial (NC)**: Você **NÃO** pode usar o material para fins comerciais (não pode comercializar o sistema ou usar para lucro próprio direto a partir da venda do código).
