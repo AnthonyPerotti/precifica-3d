@@ -41,6 +41,11 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
+  // New Customer Quick-add Modal
+  const [newCustomerModalOpen, setNewCustomerModalOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({ name: '', phone: '', email: '', document: '' });
+  const [savingNewCustomer, setSavingNewCustomer] = useState(false);
+
   // Order Form
   const [orderForm, setOrderForm] = useState({
     customer_name: '',
@@ -679,36 +684,47 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                   DADOS DO CLIENTE
                 </div>
 
-                {customers.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: '0.75rem', color: '#00bcd4' }}>Preencher com:</span>
-                    <select
-                      className="form-control"
-                      style={{ fontSize: '0.75rem', padding: '4px 8px', width: 'auto' }}
-                      onChange={(e) => {
-                        const custId = parseInt(e.target.value, 10);
-                        const c = customers.find(x => x.id === custId);
-                        if (c) {
-                          setOrderForm({
-                            ...orderForm,
-                            customer_name: c.name || '',
-                            customer_document: c.document || '',
-                            customer_phone: c.phone || '',
-                            customer_email: c.email || '',
-                            customer_address: [c.address, c.city, c.state].filter(Boolean).join(' - ')
-                          });
-                        }
-                      }}
-                    >
-                      <option value="">Selecione um cliente cadastrado...</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.phone ? `(${c.phone})` : ''} {c.document ? `• ${c.document}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '0.75rem', color: '#00bcd4' }}>Preencher com:</span>
+                  <select
+                    className="form-control"
+                    style={{ fontSize: '0.75rem', padding: '4px 8px', width: 'auto' }}
+                    onChange={(e) => {
+                      const custId = parseInt(e.target.value, 10);
+                      const c = customers.find(x => x.id === custId);
+                      if (c) {
+                        setOrderForm({
+                          ...orderForm,
+                          customer_name: c.name || '',
+                          customer_document: c.document || '',
+                          customer_phone: c.phone || '',
+                          customer_email: c.email || '',
+                          customer_address: [c.address, c.city, c.state].filter(Boolean).join(' - ')
+                        });
+                      }
+                    }}
+                  >
+                    <option value="">Selecione um cliente cadastrado...</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.phone ? `(${c.phone})` : ''} {c.document ? `• ${c.document}` : ''}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewCustomerForm({ name: '', phone: '', email: '', document: '' });
+                      setNewCustomerModalOpen(true);
+                    }}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                  >
+                    <Plus size={13} />
+                    <span>Novo</span>
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: 12 }}>
@@ -1341,6 +1357,113 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
               </div>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* Quick-add New Customer Modal */}
+      {newCustomerModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setNewCustomerModalOpen(false)}
+          title="Novo Cliente"
+          maxWidth="480px"
+        >
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newCustomerForm.name.trim()) return;
+              try {
+                setSavingNewCustomer(true);
+                const created = await api.createCustomer({
+                  name: newCustomerForm.name.trim(),
+                  phone: newCustomerForm.phone,
+                  email: newCustomerForm.email,
+                  document: newCustomerForm.document
+                });
+                // Refresh customer list
+                const custs = await api.getCustomers();
+                setCustomers(custs || []);
+                // Auto-populate order form with the new customer
+                setOrderForm(prev => ({
+                  ...prev,
+                  customer_name: created.name || newCustomerForm.name,
+                  customer_phone: created.phone || newCustomerForm.phone,
+                  customer_email: created.email || newCustomerForm.email,
+                  customer_document: created.document || newCustomerForm.document
+                }));
+                setNewCustomerModalOpen(false);
+              } catch (err) {
+                alert(err.message || 'Erro ao criar cliente.');
+              } finally {
+                setSavingNewCustomer(false);
+              }
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
+            <div className="form-group">
+              <label className="form-label">Nome *</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Nome completo ou empresa"
+                value={newCustomerForm.name}
+                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: e.target.value })}
+                required
+                autoFocus
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="form-group">
+                <label className="form-label">Telefone / WhatsApp</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="(00) 00000-0000"
+                  value={newCustomerForm.phone}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">CPF / CNPJ</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="000.000.000-00"
+                  value={newCustomerForm.document}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, document: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">E-mail</label>
+              <input
+                type="email"
+                className="form-control"
+                placeholder="cliente@email.com"
+                value={newCustomerForm.email}
+                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setNewCustomerModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={savingNewCustomer}
+              >
+                {savingNewCustomer ? 'Salvando...' : 'Criar Cliente'}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>

@@ -300,6 +300,10 @@ export function Calculator({
         setMarkup(data.settings.default_markup || 2.0);
         setTaxPct(data.settings.default_tax_pct || 6.0);
         setMarketplaceFeePct(data.settings.default_marketplace_fee_pct || 16.0);
+        // Load montagem/labor percentage from saved settings
+        if (data.settings.labor_hour_cost !== undefined) {
+          setMontagemPct(data.settings.labor_hour_cost);
+        }
         if (data.settings.calculator_layout) {
           setCalculatorLayout(data.settings.calculator_layout);
           localStorage.setItem('precifica3d_calculator_layout', data.settings.calculator_layout);

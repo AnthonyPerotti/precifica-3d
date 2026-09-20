@@ -90,25 +90,26 @@ router.get('/dashboard', (req, res) => {
     extraCostSum += (p.additional_costs_total || 0);
   });
 
-  const totalCalculatedCost = (matCostSum + prodCostSum + laborCostSum + extraCostSum) || 1;
+  const realTotalCost = matCostSum + prodCostSum + laborCostSum + extraCostSum;
+  const safeDivisor = realTotalCost || 1;
   const costBreakdown = {
     material: {
       value: parseFloat(matCostSum.toFixed(2)),
-      pct: Math.round((matCostSum / totalCalculatedCost) * 100)
+      pct: Math.round((matCostSum / safeDivisor) * 100)
     },
     production: {
       value: parseFloat(prodCostSum.toFixed(2)),
-      pct: Math.round((prodCostSum / totalCalculatedCost) * 100)
+      pct: Math.round((prodCostSum / safeDivisor) * 100)
     },
     assembly: {
       value: parseFloat(laborCostSum.toFixed(2)),
-      pct: Math.round((laborCostSum / totalCalculatedCost) * 100)
+      pct: Math.round((laborCostSum / safeDivisor) * 100)
     },
     extras: {
       value: parseFloat(extraCostSum.toFixed(2)),
-      pct: Math.round((extraCostSum / totalCalculatedCost) * 100)
+      pct: Math.round((extraCostSum / safeDivisor) * 100)
     },
-    total: parseFloat(totalCalculatedCost.toFixed(2))
+    total: parseFloat(realTotalCost.toFixed(2))
   };
 
   // 4. Revenue by Stage
@@ -161,37 +162,42 @@ router.get('/dashboard', (req, res) => {
     });
   });
 
-  // If no order items yet, populate with products list
-  if (Object.keys(productStats).length === 0) {
-    products.forEach(p => {
-      productStats[p.name] = {
-        name: p.name,
-        quantity: 1,
-        revenue: p.sale_price || 0,
-        profit: p.profit_net || 0
-      };
-    });
-  }
-
   const topProducts = Object.values(productStats)
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
-  // 7. Top Filaments
-  const topFilaments = db.prepare(`
-    SELECT f.name, f.type, f.brand, f.color_hex,
-           SUM(p.total_weight_g) as total_grams,
-           SUM(p.material_cost) as total_cost
-    FROM filaments f
-    LEFT JOIN products p ON 1=1
-    GROUP BY f.id
-    ORDER BY total_grams DESC
-    LIMIT 5
-  `).all().map(f => ({
-    name: `${f.brand || ''} ${f.type || ''}`.trim() || f.name,
-    grams: f.total_grams ? Math.round(f.total_grams) : 15,
-    cost: f.total_cost ? parseFloat(f.total_cost.toFixed(2)) : 1.45
-  }));
+  // 7. Top Filaments — derived from order items that reference a filament
+  // Build filament usage from orders that have filaments_json embedded
+  const filamentStats = {};
+
+  orders.forEach(o => {
+    const items = safeJsonParse(o.items_json, []);
+    items.forEach(it => {
+      const filaments = safeJsonParse(it.filaments_json, []);
+      filaments.forEach(f => {
+        const key = f.filament_id || f.name;
+        if (!key) return;
+        if (!filamentStats[key]) {
+          filamentStats[key] = {
+            name: f.name || `Filamento ${key}`,
+            grams: 0,
+            cost: 0
+          };
+        }
+        filamentStats[key].grams += (f.weight_g || 0) * (parseInt(it.qty, 10) || 1);
+        filamentStats[key].cost += (f.material_cost || 0) * (parseInt(it.qty, 10) || 1);
+      });
+    });
+  });
+
+  const topFilaments = Object.values(filamentStats)
+    .sort((a, b) => b.grams - a.grams)
+    .slice(0, 5)
+    .map(f => ({
+      name: f.name,
+      grams: Math.round(f.grams),
+      cost: parseFloat(f.cost.toFixed(2))
+    }));
 
   res.json({
     metrics: {
