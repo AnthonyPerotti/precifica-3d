@@ -835,89 +835,92 @@ export function Calculator({
   // RENDER HELPERS — defined before the main return block
   // ===================================================================
 
-  const renderProductCard = () => (
-    <div className="card" style={{ padding: '18px 20px', background: '#101925', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(0, 188, 212, 0.2)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <div style={{
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          background: 'rgba(0, 188, 212, 0.2)',
-          color: '#00e5ff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '0.75rem',
-          fontWeight: 800
-        }}>1</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
-          <Layers size={17} color="#00bcd4" />
-          <span>Produto</span>
-        </div>
-      </div>
+  const renderProductCard = () => {
+    const previewImg = imageUrl || plates.find(p => p.thumbnailUrl && !p.isEmpty)?.thumbnailUrl;
 
-      {/* Large Square Image / Upload Area */}
-      <div
-        onClick={() => imageInputRef.current?.click()}
-        title="Clique para carregar ou trocar a foto do produto"
-        style={{
-          width: '100%',
-          aspectRatio: '1/1',
-          maxHeight: 220,
-          background: imageUrl ? '#090f17' : 'rgba(14, 22, 34, 0.7)',
-          border: '1px dashed rgba(0, 188, 212, 0.35)',
-          borderRadius: 'var(--radius-md)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden',
-          marginBottom: 16,
-          transition: 'all 0.2s'
-        }}
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt="Foto do produto"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            onError={(e) => {
-              if (!e.currentTarget.dataset.retried && imageUrl.startsWith('/uploads')) {
-                e.currentTarget.dataset.retried = 'true';
-                e.currentTarget.src = `http://localhost:5172${imageUrl}`;
-              }
-            }}
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
-            <Upload size={32} color="#00bcd4" />
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Foto do produto</span>
-          </div>
-        )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+    return (
+      <div className="card" style={{ padding: '18px 20px', background: '#101925', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(0, 188, 212, 0.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: 'rgba(0, 188, 212, 0.2)',
+            color: '#00e5ff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: 0,
-            transition: 'opacity 0.2s',
-            color: '#fff'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-        >
-          <Upload size={22} />
+            fontSize: '0.75rem',
+            fontWeight: 800
+          }}>1</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+            <Layers size={17} color="#00bcd4" />
+            <span>Produto</span>
+          </div>
         </div>
-      </div>
-      <input
-        type="file"
-        ref={imageInputRef}
-        onChange={handleProductImageUpload}
+
+        {/* Large Square Image / Upload Area */}
+        <div
+          onClick={() => imageInputRef.current?.click()}
+          title="Clique para carregar ou trocar a foto do produto"
+          style={{
+            width: '100%',
+            aspectRatio: '1/1',
+            maxHeight: 220,
+            background: previewImg ? '#090f17' : 'rgba(14, 22, 34, 0.7)',
+            border: '1px dashed rgba(0, 188, 212, 0.35)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            position: 'relative',
+            overflow: 'hidden',
+            marginBottom: 16,
+            transition: 'all 0.2s'
+          }}
+        >
+          {previewImg ? (
+            <img
+              src={previewImg}
+              alt="Foto do produto"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              onError={(e) => {
+                if (!e.currentTarget.dataset.retried && previewImg.startsWith('/uploads')) {
+                  e.currentTarget.dataset.retried = 'true';
+                  e.currentTarget.src = `http://localhost:5172${previewImg}`;
+                }
+              }}
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
+              <Upload size={32} color="#00bcd4" />
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Foto do produto</span>
+            </div>
+          )}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: 0,
+              transition: 'opacity 0.2s',
+              color: '#fff'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+          >
+            <Upload size={22} />
+          </div>
+        </div>
+        <input
+          type="file"
+          ref={imageInputRef}
+          onChange={handleProductImageUpload}
         accept="image/*"
         style={{ display: 'none' }}
       />
@@ -955,6 +958,7 @@ export function Calculator({
       </div>
     </div>
   );
+};
   const renderPieceSection = (isClassic = false) => (
     <div className="card" style={{ padding: isClassic ? '18px 20px' : '18px 22px', background: isClassic ? '#101925' : undefined }}>
       {/* Header */}
@@ -2195,6 +2199,271 @@ export function Calculator({
       )}
     </div>
   );
+
+  const renderClassicBottomBar = () => {
+    return (
+      <div style={{
+        marginTop: 20,
+        background: 'rgba(10, 18, 28, 0.95)',
+        border: '1px solid rgba(0, 188, 212, 0.25)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '16px 20px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 16
+      }}>
+        {/* Left: 6 Cost Breakdown Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))',
+          gap: 10,
+          flex: '1 1 640px',
+          alignItems: 'stretch'
+        }}>
+          {/* 1. Material */}
+          <div style={{
+            background: 'rgba(245, 158, 11, 0.06)',
+            border: '1px solid rgba(245, 158, 11, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+              <span>Material</span>
+              <Info size={12} style={{ opacity: 0.6 }} title="Custo total dos filamentos gastos" />
+            </div>
+            <div style={{ fontSize: '1.1875rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.materialCost) : 'R$ 0,00'}
+            </div>
+          </div>
+
+          {/* 2. % Margem */}
+          <div style={{
+            background: 'rgba(168, 85, 247, 0.06)',
+            border: '1px solid rgba(168, 85, 247, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#c084fc', fontWeight: 600 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#a855f7' }} />
+              <span>% Margem</span>
+              <Info size={12} style={{ opacity: 0.6 }} title="Margem de segurança contra falhas e resíduos" />
+            </div>
+            <div style={{ fontSize: '1.1875rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.materialMarginCost) : 'R$ 0,00'}
+            </div>
+          </div>
+
+          {/* 3. Hora */}
+          <div style={{
+            background: 'rgba(56, 189, 248, 0.06)',
+            border: '1px solid rgba(56, 189, 248, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#00bcd4' }} />
+              <span>Hora</span>
+              <Info size={12} style={{ opacity: 0.6 }} title="Depreciação e custo de manutenção da impressora" />
+            </div>
+            <div style={{ fontSize: '1.1875rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.machineDepreciationCost) : 'R$ 0,00'}
+            </div>
+          </div>
+
+          {/* 4. Energia */}
+          <div style={{
+            background: 'rgba(234, 179, 8, 0.06)',
+            border: '1px solid rgba(234, 179, 8, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#facc15', fontWeight: 600 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#eab308' }} />
+              <span>Energia</span>
+              <Info size={12} style={{ opacity: 0.6 }} title="Consumo elétrico da impressora no fatiamento" />
+            </div>
+            <div style={{ fontSize: '1.1875rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.energyCost) : 'R$ 0,00'}
+            </div>
+          </div>
+
+          {/* 5. Montagem */}
+          <div style={{
+            background: 'rgba(59, 130, 246, 0.06)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#60a5fa', fontWeight: 600 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#3b82f6' }} />
+              <span>Montagem</span>
+              <Info size={12} style={{ opacity: 0.6 }} title="Mão de obra e tempo de montagem / acabamento" />
+            </div>
+            <div style={{ fontSize: '1.1875rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.laborAssemblyCost) : 'R$ 0,00'}
+            </div>
+          </div>
+
+          {/* 6. Custo Total */}
+          <div style={{
+            background: 'rgba(0, 188, 212, 0.12)',
+            border: '1px solid #00bcd4',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#00e5ff', fontWeight: 700 }}>
+              <span>$ Custo Total</span>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 10 }}>
+              {pricing ? formatCurrency(pricing.unitCost) : 'R$ 0,00'}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Pricing & Actions Card */}
+        <div style={{
+          flex: '0 1 310px',
+          minWidth: '270px',
+          background: 'rgba(14, 23, 35, 0.7)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 'var(--radius-md)',
+          padding: '12px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: 10
+        }}>
+          {/* Top: Custos padrão Link */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={handleOpenCostSettingsModal}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#38bdf8',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: 0
+              }}
+            >
+              <Sliders size={12} />
+              <span>Custos padrão</span>
+            </button>
+          </div>
+
+          {/* Lucro Row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lucro</span>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+              {pricing ? formatCurrency(pricing.profitNet) : 'R$ 0,00'}
+              <span style={{ fontSize: '0.75rem', color: '#34d399', marginLeft: 4 }}>
+                ({pricing ? formatPercent(pricing.profitMarginPct) : '0%'})
+              </span>
+            </span>
+          </div>
+
+          {/* Markup Slider Row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Markup</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+              <input
+                type="range"
+                min="1.0"
+                max="10.0"
+                step="0.1"
+                value={markup}
+                onChange={(e) => setMarkup(parseFloat(e.target.value) || 2.0)}
+                style={{ width: 110, accentColor: '#00bcd4', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-mono)', minWidth: '38px', textAlign: 'right' }}>
+                {markup.toFixed(1).replace('.', ',')} x
+              </span>
+            </div>
+          </div>
+
+          {/* Preço de Venda Row */}
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Preço de Venda</span>
+            <span style={{ fontSize: '1.4375rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+              {pricing ? formatCurrency(pricing.unitSalePrice) : 'R$ 0,00'}
+            </span>
+          </div>
+
+          {/* Action Buttons Row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={handleGenerateQuote}
+              className="btn btn-secondary"
+              style={{
+                flex: 1,
+                padding: '7px 10px',
+                fontSize: '0.75rem',
+                color: '#00e5ff',
+                borderColor: 'rgba(0, 188, 212, 0.4)',
+                background: 'rgba(0, 188, 212, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 5
+              }}
+            >
+              <FileText size={13} />
+              <span>Gerar orçamento</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveProduct}
+              className="btn btn-primary"
+              style={{
+                flex: 1,
+                padding: '7px 12px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 5,
+                background: '#00bcd4',
+                color: '#000000'
+              }}
+            >
+              <Save size={14} />
+              <span>{editingProduct ? 'Atualizar' : 'Salvar Produto'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="page-wrapper animate-fade-in" style={{ paddingBottom: 40 }}>
       {/* Editing alert */}
@@ -2577,23 +2846,30 @@ export function Calculator({
 
       {/* Main Content: Classic or Steps */}
       {isClassic ? (
-        <div className="classic-layout-grid">
-          {/* Column 1: Produto */}
-          <div>
-            {renderProductCard()}
+        <>
+          <div className="classic-layout-grid">
+            {/* Column 1: Produto */}
+            <div>
+              {renderProductCard()}
+            </div>
+
+            {/* Column 2: Placas de Impressão */}
+            <div>
+              {renderPieceSection(true)}
+            </div>
+
+            {/* Column 3: Filamentos & Custos adicionais */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {renderFilamentsSection(true)}
+              {renderExtrasSection(true)}
+            </div>
           </div>
 
-          {/* Column 2: Placas de Impressão */}
-          <div>
-            {renderPieceSection(true)}
+          {/* Classic Bottom Bar: Breakdown de valores + Preço/Ações */}
+          <div style={{ position: 'sticky', bottom: 12, zIndex: 60, marginTop: 16 }}>
+            {renderClassicBottomBar()}
           </div>
-
-          {/* Column 3: Filamentos & Custos adicionais */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {renderFilamentsSection(true)}
-            {renderExtrasSection(true)}
-          </div>
-        </div>
+        </>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {renderPieceSection(false)}
