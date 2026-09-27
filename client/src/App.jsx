@@ -122,7 +122,10 @@ export function App() {
               clientMode={clientMode}
               editingProduct={editingProduct}
               onClearEditingProduct={() => setEditingProduct(null)}
-              onProductSaved={() => setEditingProduct(null)}
+              onProductSaved={() => {
+                setEditingProduct(null);
+                setActiveTab('products');
+              }}
               onGenerateOrder={handleGenerateOrderFromProduct}
             />
           )}

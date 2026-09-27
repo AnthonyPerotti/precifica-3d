@@ -55,9 +55,9 @@ export function Financial() {
   };
 
   const cost = data?.costBreakdown || {
-    material: { value: 0, pct: 38 },
-    production: { value: 0, pct: 56 },
-    assembly: { value: 0, pct: 6 },
+    material: { value: 0, pct: 0 },
+    production: { value: 0, pct: 0 },
+    assembly: { value: 0, pct: 0 },
     extras: { value: 0, pct: 0 },
     total: 0
   };

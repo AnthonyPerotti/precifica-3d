@@ -51,6 +51,8 @@ router.put('/', (req, res) => {
     catalog_settings_json
   } = req.body;
 
+  const toParam = (v) => (v !== undefined ? v : null);
+
   const stmt = db.prepare(`
     UPDATE settings SET
       business_name = COALESCE(?, business_name),
@@ -81,31 +83,41 @@ router.put('/', (req, res) => {
   `);
 
   stmt.run(
-    business_name,
-    currency_symbol,
-    energy_kwh_cost,
-    labor_hour_cost,
-    failure_margin_pct,
-    default_markup,
-    default_tax_pct,
-    default_marketplace_fee_pct,
-    contact_whatsapp,
-    client_mode_pin,
-    company_name,
-    company_cnpj,
-    company_ie,
-    company_cep,
-    company_address,
-    company_city,
-    company_state,
-    company_phone,
-    company_email,
-    company_logo,
-    default_printer_power_w,
-    machine_hour_cost,
-    selected_state_uf,
+    toParam(business_name),
+    toParam(currency_symbol),
+    toParam(energy_kwh_cost),
+    toParam(labor_hour_cost),
+    toParam(failure_margin_pct),
+    toParam(default_markup),
+    toParam(default_tax_pct),
+    toParam(default_marketplace_fee_pct),
+    toParam(contact_whatsapp),
+    toParam(client_mode_pin),
+    toParam(company_name),
+    toParam(company_cnpj),
+    toParam(company_ie),
+    toParam(company_cep),
+    toParam(company_address),
+    toParam(company_city),
+    toParam(company_state),
+    toParam(company_phone),
+    toParam(company_email),
+    toParam(company_logo),
+    toParam(default_printer_power_w),
+    toParam(machine_hour_cost),
+    toParam(selected_state_uf),
     catalog_settings_json !== undefined ? (typeof catalog_settings_json === 'string' ? catalog_settings_json : JSON.stringify(catalog_settings_json)) : null
   );
+
+  // If power or machine hour cost changed, sync with default printer
+  if (default_printer_power_w !== undefined || machine_hour_cost !== undefined) {
+    db.prepare(`
+      UPDATE printers SET
+        power_watts = COALESCE(?, power_watts),
+        hourly_cost = COALESCE(?, hourly_cost)
+      WHERE is_default = 1
+    `).run(toParam(default_printer_power_w), toParam(machine_hour_cost));
+  }
 
   const updated = db.prepare('SELECT * FROM settings WHERE id = 1').get();
   res.json({ settings: updated, message: 'Configurações atualizadas com sucesso.' });
@@ -166,7 +178,20 @@ router.put('/printers/:id', (req, res) => {
     WHERE id = ?
   `);
 
-  stmt.run(name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, bed_width, bed_depth, bed_height, is_default !== undefined ? (is_default ? 1 : 0) : null, id);
+  const toParam = (v) => (v !== undefined ? v : null);
+  stmt.run(
+    toParam(name),
+    toParam(model),
+    toParam(power_watts),
+    toParam(purchase_price),
+    toParam(lifespan_hours),
+    toParam(maintenance_hour_cost),
+    toParam(bed_width),
+    toParam(bed_depth),
+    toParam(bed_height),
+    is_default !== undefined ? (is_default ? 1 : 0) : null,
+    id
+  );
 
   const updated = db.prepare('SELECT * FROM printers WHERE id = ?').get(id);
   res.json(updated);
@@ -237,7 +262,21 @@ router.put('/filaments/:id', (req, res) => {
     WHERE id = ?
   `);
 
-  stmt.run(name, type, brand, color_name, color_hex, density_g_cm3, spool_weight_g, price, costPerGram, in_stock_spools, is_active, id);
+  const toParam = (v) => (v !== undefined ? v : null);
+  stmt.run(
+    toParam(name),
+    toParam(type),
+    toParam(brand),
+    toParam(color_name),
+    toParam(color_hex),
+    toParam(density_g_cm3),
+    toParam(spool_weight_g),
+    toParam(price),
+    costPerGram,
+    toParam(in_stock_spools),
+    toParam(is_active),
+    id
+  );
 
   const updated = db.prepare('SELECT * FROM filaments WHERE id = ?').get(id);
   res.json(updated);
@@ -278,7 +317,8 @@ router.put('/additional-costs/:id', (req, res) => {
     WHERE id = ?
   `);
 
-  stmt.run(name, category, unit_cost, default_qty, id);
+  const toParam = (v) => (v !== undefined ? v : null);
+  stmt.run(toParam(name), toParam(category), toParam(unit_cost), toParam(default_qty), id);
   const updated = db.prepare('SELECT * FROM additional_costs WHERE id = ?').get(id);
   res.json(updated);
 });

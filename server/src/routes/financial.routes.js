@@ -95,19 +95,19 @@ router.get('/dashboard', (req, res) => {
   const costBreakdown = {
     material: {
       value: parseFloat(matCostSum.toFixed(2)),
-      pct: Math.round((matCostSum / safeDivisor) * 100)
+      pct: realTotalCost > 0 ? Math.round((matCostSum / safeDivisor) * 100) : 0
     },
     production: {
       value: parseFloat(prodCostSum.toFixed(2)),
-      pct: Math.round((prodCostSum / safeDivisor) * 100)
+      pct: realTotalCost > 0 ? Math.round((prodCostSum / safeDivisor) * 100) : 0
     },
     assembly: {
       value: parseFloat(laborCostSum.toFixed(2)),
-      pct: Math.round((laborCostSum / safeDivisor) * 100)
+      pct: realTotalCost > 0 ? Math.round((laborCostSum / safeDivisor) * 100) : 0
     },
     extras: {
       value: parseFloat(extraCostSum.toFixed(2)),
-      pct: Math.round((extraCostSum / safeDivisor) * 100)
+      pct: realTotalCost > 0 ? Math.round((extraCostSum / safeDivisor) * 100) : 0
     },
     total: parseFloat(realTotalCost.toFixed(2))
   };

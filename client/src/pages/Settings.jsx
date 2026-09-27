@@ -4,6 +4,7 @@ import {
   Building2,
   Users,
   Disc,
+  Package,
   Settings as SettingsIcon,
   ShoppingBag,
   Link2,
@@ -180,6 +181,18 @@ export function Settings({ onLogout }) {
   // Backup data
   const [backupJson, setBackupJson] = useState('');
 
+  // Additional Costs / Insumos State
+  const [additionalCosts, setAdditionalCosts] = useState([]);
+  const [insumoSearch, setInsumoSearch] = useState('');
+  const [insumoModalOpen, setInsumoModalOpen] = useState(false);
+  const [editingInsumoId, setEditingInsumoId] = useState(null);
+  const [insumoForm, setInsumoForm] = useState({
+    name: '',
+    category: 'Geral',
+    unit_cost: '',
+    default_qty: 1
+  });
+
   useEffect(() => {
     loadAllData();
   }, []);
@@ -213,6 +226,10 @@ export function Settings({ onLogout }) {
 
       if (settingsRes.filaments) {
         setFilaments(settingsRes.filaments);
+      }
+
+      if (settingsRes.additionalCosts) {
+        setAdditionalCosts(settingsRes.additionalCosts);
       }
 
       if (Array.isArray(custRes)) {
@@ -415,6 +432,65 @@ export function Settings({ onLogout }) {
     }
   };
 
+  // Additional Costs / Insumos CRUD
+  const handleOpenNewInsumo = () => {
+    setEditingInsumoId(null);
+    setInsumoForm({ name: '', category: 'Geral', unit_cost: '', default_qty: 1 });
+    setInsumoModalOpen(true);
+  };
+
+  const handleOpenEditInsumo = (item) => {
+    setEditingInsumoId(item.id);
+    setInsumoForm({
+      name: item.name || '',
+      category: item.category || 'Geral',
+      unit_cost: item.unit_cost ?? '',
+      default_qty: item.default_qty ?? 1
+    });
+    setInsumoModalOpen(true);
+  };
+
+  const handleSaveInsumo = async (e) => {
+    e.preventDefault();
+    const cost = parseFloat(insumoForm.unit_cost);
+    if (!insumoForm.name.trim() || isNaN(cost) || cost < 0) {
+      showNotification('Preencha nome e custo unitário corretamente.', 'error');
+      return;
+    }
+    try {
+      const payload = {
+        name: insumoForm.name.trim(),
+        category: insumoForm.category.trim() || 'Geral',
+        unit_cost: cost,
+        default_qty: parseInt(insumoForm.default_qty, 10) || 1
+      };
+      if (editingInsumoId) {
+        await api.updateAdditionalCost(editingInsumoId, payload);
+        showNotification('Insumo atualizado com sucesso!');
+      } else {
+        await api.createAdditionalCost(payload);
+        showNotification('Insumo cadastrado com sucesso!');
+      }
+      setInsumoModalOpen(false);
+      const res = await api.getSettings();
+      setAdditionalCosts(res.additionalCosts || []);
+    } catch (err) {
+      alert(err.message || 'Erro ao salvar insumo.');
+    }
+  };
+
+  const handleDeleteInsumo = async (id, e) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm('Excluir este insumo da biblioteca?')) return;
+    try {
+      await api.deleteAdditionalCost(id);
+      setAdditionalCosts(additionalCosts.filter(i => i.id !== id));
+      showNotification('Insumo excluído.');
+    } catch (err) {
+      alert(err.message || 'Erro ao excluir insumo.');
+    }
+  };
+
   // Group filaments by brand
   const filteredFilaments = filaments.filter(f => {
     if (!filamentSearch.trim()) return true;
@@ -458,6 +534,7 @@ export function Settings({ onLogout }) {
           { id: 'empresa', label: 'Empresa', icon: Building2 },
           { id: 'clientes', label: 'Clientes', icon: Users },
           { id: 'filamentos', label: 'Filamentos', icon: Disc },
+          { id: 'insumos', label: 'Insumos', icon: Package },
           { id: 'custos-padrao', label: 'Custos Padrão', icon: SettingsIcon },
           { id: 'catalogo', label: 'Catálogo', icon: ShoppingBag },
           { id: 'integracoes', label: 'Integrações', icon: Link2 }
@@ -1335,16 +1412,20 @@ export function Settings({ onLogout }) {
             {/* Row 3: Custo de montagem padrão */}
             <div className="form-group">
               <label className="form-label">
-                Custo de montagem padrão <span title="Sua mão de obra&#10;O valor da SUA HORA de trabalho manual (descolar da mesa, tirar suporte, lixar, colar, embalar).&#10;Se você quer ganhar R$3.000 por mês trabalhando 160h/mês, seu custo de montagem é ~R$18,75/h." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
+                Montagem / Pós-processo padrão (%) <span title="Overhead de mão de obra&#10;Percentual aplicado sobre o custo de fabricação para cobrir o tempo de pós-processo: descolar da mesa, remover suportes, lixar, colar, embalar.&#10;Ex: 10% significa que se o custo de impressão for R$5,00, serão adicionados R$0,50 de mão de obra.&#10;Faixa típica: 5% (simples) · 10% (padrão) · 20% (muito trabalhoso)." style={{ cursor: 'help', color: 'var(--text-muted)' }}>?</span>
               </label>
-              <input
-                type="number"
-                step="1"
-                min="0"
-                className="form-control"
-                value={settings.labor_hour_cost}
-                onChange={(e) => setSettings({ ...settings, labor_hour_cost: parseFloat(e.target.value) || 0 })}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  className="form-control"
+                  value={settings.labor_hour_cost}
+                  onChange={(e) => setSettings({ ...settings, labor_hour_cost: parseFloat(e.target.value) || 0 })}
+                  style={{ paddingRight: 36 }}
+                />
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>%</span>
+              </div>
             </div>
 
             {/* Row 4: Taxa de plataformas padrão */}
@@ -1385,6 +1466,148 @@ export function Settings({ onLogout }) {
               Salvar
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5.5. INSUMOS */}
+      {/* ========================================================================= */}
+      {activeTab === 'insumos' && (
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+                Insumos
+              </h1>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                Biblioteca de materiais e extras que aparecem na calculadora. Custos como embalagens, parafusos, adesivos, etc.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleOpenNewInsumo}
+            >
+              <Plus size={16} />
+              <span>Novo Insumo</span>
+            </button>
+          </div>
+
+          {/* Search */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+              <Search size={15} />
+            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar insumo..."
+              value={insumoSearch}
+              onChange={(e) => setInsumoSearch(e.target.value)}
+              style={{ paddingLeft: 36 }}
+            />
+          </div>
+
+          {/* Table */}
+          {additionalCosts.filter(i => !insumoSearch.trim() ||
+            (i.name || '').toLowerCase().includes(insumoSearch.toLowerCase()) ||
+            (i.category || '').toLowerCase().includes(insumoSearch.toLowerCase())
+          ).length === 0 ? (
+            <div style={{
+              textAlign: 'center', padding: '40px 20px',
+              color: 'var(--text-muted)', fontSize: '0.875rem',
+              background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)',
+              border: '1px dashed var(--border-color)'
+            }}>
+              <Package size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
+              <div>Nenhum insumo cadastrado.</div>
+              <div style={{ fontSize: '0.8125rem', marginTop: 4 }}>Clique em "Novo Insumo" para adicionar embalagens, parafusos, adesivos, etc.</div>
+            </div>
+          ) : (
+            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)' }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>Nome</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>Categoria</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>Custo unit.</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 600 }}>Qtd. padrão</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 600 }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {additionalCosts
+                    .filter(i => !insumoSearch.trim() ||
+                      (i.name || '').toLowerCase().includes(insumoSearch.toLowerCase()) ||
+                      (i.category || '').toLowerCase().includes(insumoSearch.toLowerCase())
+                    )
+                    .map((item, idx) => (
+                      <tr
+                        key={item.id}
+                        style={{
+                          borderBottom: idx < additionalCosts.length - 1 ? '1px solid var(--border-color)' : 'none',
+                          transition: 'background 0.1s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {item.name}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>
+                          <span style={{
+                            background: 'rgba(0, 188, 212, 0.1)', color: '#00bcd4',
+                            padding: '2px 8px', borderRadius: 9999, fontSize: '0.75rem', fontWeight: 600
+                          }}>
+                            {item.category || 'Geral'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                          {formatCurrency(item.unit_cost)}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          {item.default_qty ?? 1}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-icon"
+                              style={{ width: 30, height: 30 }}
+                              onClick={() => handleOpenEditInsumo(item)}
+                              title="Editar"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-icon"
+                              style={{ width: 30, height: 30 }}
+                              onClick={(e) => handleDeleteInsumo(item.id, e)}
+                              title="Excluir"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div style={{
+            background: 'rgba(0, 188, 212, 0.06)',
+            border: '1px solid rgba(0, 188, 212, 0.2)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 16px',
+            fontSize: '0.8125rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.5
+          }}>
+            💡 <strong>Insumos</strong> são materiais físicos que entram no produto além do filamento: embalagens, parafusos, adesivos, elásticos, peças compradas, etc. Eles aparecem na seção <strong>Extras</strong> da calculadora.
+          </div>
         </div>
       )}
 
@@ -2105,6 +2328,88 @@ export function Settings({ onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: NOVO / EDITAR INSUMO */}
+      {/* ========================================================================= */}
+      {insumoModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setInsumoModalOpen(false)}
+          title={editingInsumoId ? 'Editar insumo' : 'Novo insumo'}
+          maxWidth="440px"
+        >
+          <form onSubmit={handleSaveInsumo} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="form-group">
+              <label className="form-label">Nome <span style={{ color: '#f87171' }}>*</span></label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Ex.: Caixinha de papelão, Parafuso M3, Imã de neodímio"
+                value={insumoForm.name}
+                onChange={(e) => setInsumoForm({ ...insumoForm, name: e.target.value })}
+                required
+                autoFocus
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr', gap: 12 }}>
+              <div className="form-group">
+                <label className="form-label">Categoria</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Ex.: Embalagem, Hardware"
+                  value={insumoForm.category}
+                  onChange={(e) => setInsumoForm({ ...insumoForm, category: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Custo unit. (R$) <span style={{ color: '#f87171' }}>*</span></label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="form-control"
+                  placeholder="0.00"
+                  value={insumoForm.unit_cost}
+                  onChange={(e) => setInsumoForm({ ...insumoForm, unit_cost: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Qtd. padrão</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  className="form-control"
+                  value={insumoForm.default_qty}
+                  onChange={(e) => setInsumoForm({ ...insumoForm, default_qty: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(0, 188, 212, 0.06)',
+              border: '1px solid rgba(0, 188, 212, 0.2)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 14px',
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)'
+            }}>
+              O custo unitário é o preço de <strong>um único item</strong>. A quantidade padrão define quantos são usados por produto por padrão, podendo ser ajustado na calculadora.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setInsumoModalOpen(false)}>Cancelar</button>
+              <button type="submit" className="btn btn-primary">Salvar</button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* ========================================================================= */}

@@ -139,7 +139,7 @@ router.post('/', (req, res) => {
     name,
     description || '',
     category || 'Geral',
-    is_active_in_catalog !== undefined ? (is_active_in_catalog ? 1 : 0) : 1,
+    is_active_in_catalog !== undefined ? (is_active_in_catalog ? 1 : 0) : 0,
     image_url || '',
     model_file_url || '',
     model_filename || '',

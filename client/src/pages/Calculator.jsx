@@ -151,10 +151,10 @@ export function Calculator({
   // Indirect Costs / Percentages
   const [montagemEnabled, setMontagemEnabled] = useState(true);
   const [montagemPct, setMontagemPct] = useState(10);
-  const [platformFeeEnabled, setPlatformFeeEnabled] = useState(true);
-  const [platformFeePct, setMarketplaceFeePct] = useState(16.0);
-  const [taxEnabled, setTaxEnabled] = useState(true);
-  const [taxPct, setTaxPct] = useState(6.0);
+  const [platformFeeEnabled, setPlatformFeeEnabled] = useState(false);
+  const [platformFeePct, setMarketplaceFeePct] = useState(0.0);
+  const [taxEnabled, setTaxEnabled] = useState(false);
+  const [taxPct, setTaxPct] = useState(0.0);
 
   // Markup & Margins
   const [markup, setMarkup] = useState(2.0);
@@ -190,9 +190,9 @@ export function Calculator({
       printerPowerW: currentPrinter?.power_watts ?? settings?.default_printer_power_w ?? 150,
       kwhCost: settings?.energy_kwh_cost ?? 0.8,
       selectedStateUf: settings?.selected_state_uf || 'SP',
-      montagemPct: montagemPct ?? 10,
-      platformFeePct: platformFeePct ?? 0,
-      taxPct: taxPct ?? 0
+      montagemPct: settings?.labor_hour_cost !== undefined && settings?.labor_hour_cost !== null ? settings.labor_hour_cost : (montagemPct ?? 10),
+      platformFeePct: settings?.default_marketplace_fee_pct !== undefined && settings?.default_marketplace_fee_pct !== null ? settings.default_marketplace_fee_pct : (platformFeePct ?? 0),
+      taxPct: settings?.default_tax_pct !== undefined && settings?.default_tax_pct !== null ? settings.default_tax_pct : (taxPct ?? 0)
     });
     setCostModalOpen(true);
   };
@@ -200,18 +200,22 @@ export function Calculator({
   const handleSaveCostSettings = async () => {
     try {
       setCostFormSaving(true);
+      const montagemNum = parseFloat(costForm.montagemPct) || 0;
+      const platformFeeNum = parseFloat(costForm.platformFeePct) || 0;
+      const taxNum = parseFloat(costForm.taxPct) || 0;
+
       const payload = {
         failure_margin_pct: parseFloat(costForm.failureMarginPct) || 0,
         machine_hour_cost: parseFloat(costForm.machineHourCost) || 0,
         default_printer_power_w: parseFloat(costForm.printerPowerW) || 0,
         energy_kwh_cost: parseFloat(costForm.kwhCost) || 0,
         selected_state_uf: costForm.selectedStateUf,
-        labor_hour_cost: parseFloat(costForm.montagemPct) || 0,
-        default_marketplace_fee_pct: parseFloat(costForm.platformFeePct) || 0,
-        default_tax_pct: parseFloat(costForm.taxPct) || 0
+        labor_hour_cost: montagemNum,
+        default_marketplace_fee_pct: platformFeeNum,
+        default_tax_pct: taxNum
       };
 
-      await api.updateSettings(payload);
+      const res = await api.updateSettings(payload);
 
       if (costForm.printerId) {
         setSelectedPrinterId(costForm.printerId);
@@ -236,13 +240,14 @@ export function Calculator({
         }
       }
 
-      setSettings(prev => ({
-        ...prev,
-        ...payload
-      }));
-      setMontagemPct(parseFloat(costForm.montagemPct) || 0);
-      setMarketplaceFeePct(parseFloat(costForm.platformFeePct) || 0);
-      setTaxPct(parseFloat(costForm.taxPct) || 0);
+      const updatedSettings = res?.settings || { ...settings, ...payload };
+      setSettings(updatedSettings);
+
+      setMontagemPct(montagemNum);
+      setMarketplaceFeePct(platformFeeNum);
+      setPlatformFeeEnabled(platformFeeNum > 0);
+      setTaxPct(taxNum);
+      setTaxEnabled(taxNum > 0);
 
       setCostModalOpen(false);
       setMessage({ type: 'success', text: 'Configurações de custo padrão salvas com sucesso!' });
@@ -280,9 +285,15 @@ export function Calculator({
         setSelectedExtras(editingProduct.additionalCosts);
       }
 
-      if (editingProduct.markup) setMarkup(editingProduct.markup);
-      if (editingProduct.tax_cost !== undefined) setTaxPct(editingProduct.tax_pct || 6.0);
-      if (editingProduct.marketplace_fee_cost !== undefined) setMarketplaceFeePct(editingProduct.marketplace_fee_pct || 16.0);
+      if (editingProduct.markup !== undefined && editingProduct.markup !== null) setMarkup(editingProduct.markup);
+      if (editingProduct.tax_pct !== undefined && editingProduct.tax_pct !== null) {
+        setTaxPct(editingProduct.tax_pct);
+        setTaxEnabled(Number(editingProduct.tax_pct) > 0);
+      }
+      if (editingProduct.marketplace_fee_pct !== undefined && editingProduct.marketplace_fee_pct !== null) {
+        setMarketplaceFeePct(editingProduct.marketplace_fee_pct);
+        setPlatformFeeEnabled(Number(editingProduct.marketplace_fee_pct) > 0);
+      }
     }
   }, [editingProduct]);
 
@@ -297,12 +308,22 @@ export function Calculator({
       setSlicerProfiles(data.slicerProfiles || []);
 
       if (data.settings) {
-        setMarkup(data.settings.default_markup || 2.0);
-        setTaxPct(data.settings.default_tax_pct || 6.0);
-        setMarketplaceFeePct(data.settings.default_marketplace_fee_pct || 16.0);
+        if (data.settings.default_markup !== undefined && data.settings.default_markup !== null) {
+          setMarkup(Number(data.settings.default_markup));
+        }
+        if (data.settings.default_tax_pct !== undefined && data.settings.default_tax_pct !== null) {
+          const tVal = Number(data.settings.default_tax_pct);
+          setTaxPct(tVal);
+          setTaxEnabled(tVal > 0);
+        }
+        if (data.settings.default_marketplace_fee_pct !== undefined && data.settings.default_marketplace_fee_pct !== null) {
+          const fVal = Number(data.settings.default_marketplace_fee_pct);
+          setMarketplaceFeePct(fVal);
+          setPlatformFeeEnabled(fVal > 0);
+        }
         // Load montagem/labor percentage from saved settings
-        if (data.settings.labor_hour_cost !== undefined) {
-          setMontagemPct(data.settings.labor_hour_cost);
+        if (data.settings.labor_hour_cost !== undefined && data.settings.labor_hour_cost !== null) {
+          setMontagemPct(Number(data.settings.labor_hour_cost));
         }
         if (data.settings.calculator_layout) {
           setCalculatorLayout(data.settings.calculator_layout);
@@ -757,7 +778,9 @@ export function Calculator({
         profit_margin_pct: pricing?.profitMarginPct || 0,
         placas: plates,
         filaments: selectedFilaments,
-        additionalCosts: selectedExtras
+        additionalCosts: selectedExtras,
+        // New products start inactive in catalog; editing keeps existing value
+        ...(!(editingProduct && editingProduct.id) && { is_active_in_catalog: 0 })
       };
 
       if (editingProduct && editingProduct.id) {
