@@ -53,6 +53,7 @@ function initDatabase(database) {
       machine_hour_cost REAL DEFAULT 0.40,
       selected_state_uf TEXT DEFAULT 'SP',
       catalog_settings_json TEXT DEFAULT '{}',
+      calculator_layout TEXT DEFAULT 'steps',
       created_at TEXT DEFAULT (datetime('now', 'localtime'))
     );
 
@@ -64,6 +65,7 @@ function initDatabase(database) {
       purchase_price REAL DEFAULT 5500.0,
       lifespan_hours REAL DEFAULT 5000.0,
       maintenance_hour_cost REAL DEFAULT 0.50,
+      hourly_cost REAL DEFAULT 0.50,
       bed_width REAL DEFAULT 256,
       bed_depth REAL DEFAULT 256,
       bed_height REAL DEFAULT 256,
@@ -214,6 +216,18 @@ function runMigrations(database) {
     addCol('machine_hour_cost', "REAL DEFAULT 0.40");
     addCol('selected_state_uf', "TEXT DEFAULT 'SP'");
     addCol('catalog_settings_json', "TEXT DEFAULT '{}'");
+    addCol('calculator_layout', "TEXT DEFAULT 'steps'");
+
+    // Migration for printers
+    const printerColumns = database.prepare("PRAGMA table_info(printers)").all().map(c => c.name);
+    if (!printerColumns.includes('hourly_cost')) {
+      try {
+        database.exec("ALTER TABLE printers ADD COLUMN hourly_cost REAL DEFAULT 0.50;");
+        database.exec("UPDATE printers SET hourly_cost = maintenance_hour_cost WHERE hourly_cost IS NULL OR hourly_cost = 0;");
+      } catch (e) {
+        console.error("Migration error on printers.hourly_cost:", e.message);
+      }
+    }
 
     // Migration for products
     const productColumns = database.prepare("PRAGMA table_info(products)").all().map(c => c.name);

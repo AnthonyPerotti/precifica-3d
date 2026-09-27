@@ -48,7 +48,8 @@ router.put('/', (req, res) => {
     default_printer_power_w,
     machine_hour_cost,
     selected_state_uf,
-    catalog_settings_json
+    catalog_settings_json,
+    calculator_layout
   } = req.body;
 
   const toParam = (v) => (v !== undefined ? v : null);
@@ -78,7 +79,8 @@ router.put('/', (req, res) => {
       default_printer_power_w = COALESCE(?, default_printer_power_w),
       machine_hour_cost = COALESCE(?, machine_hour_cost),
       selected_state_uf = COALESCE(?, selected_state_uf),
-      catalog_settings_json = COALESCE(?, catalog_settings_json)
+      catalog_settings_json = COALESCE(?, catalog_settings_json),
+      calculator_layout = COALESCE(?, calculator_layout)
     WHERE id = 1
   `);
 
@@ -106,17 +108,31 @@ router.put('/', (req, res) => {
     toParam(default_printer_power_w),
     toParam(machine_hour_cost),
     toParam(selected_state_uf),
-    catalog_settings_json !== undefined ? (typeof catalog_settings_json === 'string' ? catalog_settings_json : JSON.stringify(catalog_settings_json)) : null
+    catalog_settings_json !== undefined ? (typeof catalog_settings_json === 'string' ? catalog_settings_json : JSON.stringify(catalog_settings_json)) : null,
+    toParam(calculator_layout)
   );
 
   // If power or machine hour cost changed, sync with default printer
   if (default_printer_power_w !== undefined || machine_hour_cost !== undefined) {
-    db.prepare(`
-      UPDATE printers SET
-        power_watts = COALESCE(?, power_watts),
-        hourly_cost = COALESCE(?, hourly_cost)
-      WHERE is_default = 1
-    `).run(toParam(default_printer_power_w), toParam(machine_hour_cost));
+    try {
+      db.prepare(`
+        UPDATE printers SET
+          power_watts = COALESCE(?, power_watts),
+          hourly_cost = COALESCE(?, hourly_cost)
+        WHERE is_default = 1
+      `).run(toParam(default_printer_power_w), toParam(machine_hour_cost));
+    } catch {
+      try {
+        db.prepare(`
+          UPDATE printers SET
+            power_watts = COALESCE(?, power_watts),
+            maintenance_hour_cost = COALESCE(?, maintenance_hour_cost)
+          WHERE is_default = 1
+        `).run(toParam(default_printer_power_w), toParam(machine_hour_cost));
+      } catch (err) {
+        console.error('Error syncing default printer:', err.message);
+      }
+    }
   }
 
   const updated = db.prepare('SELECT * FROM settings WHERE id = 1').get();
@@ -126,16 +142,18 @@ router.put('/', (req, res) => {
 // PRINTERS CRUD
 router.post('/printers', (req, res) => {
   const db = getDb();
-  const { name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, bed_width, bed_depth, bed_height, is_default } = req.body;
+  const { name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, hourly_cost, bed_width, bed_depth, bed_height, is_default } = req.body;
 
   if (is_default) {
     db.prepare('UPDATE printers SET is_default = 0').run();
   }
 
   const stmt = db.prepare(`
-    INSERT INTO printers (name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, bed_width, bed_depth, bed_height, is_default)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO printers (name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, hourly_cost, bed_width, bed_depth, bed_height, is_default)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+
+  const effectiveHourlyCost = hourly_cost !== undefined ? hourly_cost : (maintenance_hour_cost || 0.50);
 
   const result = stmt.run(
     name || 'Nova Impressora',
@@ -144,6 +162,7 @@ router.post('/printers', (req, res) => {
     purchase_price || 3000,
     lifespan_hours || 5000,
     maintenance_hour_cost || 0.50,
+    effectiveHourlyCost,
     bed_width || 220,
     bed_depth || 220,
     bed_height || 250,
@@ -157,7 +176,7 @@ router.post('/printers', (req, res) => {
 router.put('/printers/:id', (req, res) => {
   const db = getDb();
   const { id } = req.params;
-  const { name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, bed_width, bed_depth, bed_height, is_default } = req.body;
+  const { name, model, power_watts, purchase_price, lifespan_hours, maintenance_hour_cost, hourly_cost, bed_width, bed_depth, bed_height, is_default } = req.body;
 
   if (is_default) {
     db.prepare('UPDATE printers SET is_default = 0').run();
@@ -171,6 +190,7 @@ router.put('/printers/:id', (req, res) => {
       purchase_price = COALESCE(?, purchase_price),
       lifespan_hours = COALESCE(?, lifespan_hours),
       maintenance_hour_cost = COALESCE(?, maintenance_hour_cost),
+      hourly_cost = COALESCE(?, hourly_cost),
       bed_width = COALESCE(?, bed_width),
       bed_depth = COALESCE(?, bed_depth),
       bed_height = COALESCE(?, bed_height),
@@ -186,6 +206,7 @@ router.put('/printers/:id', (req, res) => {
     toParam(purchase_price),
     toParam(lifespan_hours),
     toParam(maintenance_hour_cost),
+    toParam(hourly_cost),
     toParam(bed_width),
     toParam(bed_depth),
     toParam(bed_height),
