@@ -1763,74 +1763,82 @@ export function Calculator({
                   key={item.id || idx}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
+                    flexDirection: 'column',
+                    padding: '10px 12px',
                     background: '#0d1520',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-color)',
-                    gap: 12
+                    border: '1px solid rgba(0, 188, 212, 0.18)',
+                    gap: 8
                   }}
                 >
-                  {/* Name input */}
-                  <input
-                    type="text"
-                    value={item.name}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, name: val } : ex));
-                    }}
-                    className="form-control"
-                    style={{ flex: 1, padding: '4px 8px', fontSize: '0.8125rem' }}
-                  />
-
-                  {/* Qty */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qtd:</span>
+                  {/* Row 1: Item Name and Remove Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <input
-                      type="number"
-                      min="1"
-                      value={item.qty || 1}
+                      type="text"
+                      value={item.name}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value, 10) || 1;
-                        setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, qty: val } : ex));
+                        const val = e.target.value;
+                        setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, name: val } : ex));
                       }}
+                      placeholder="Nome do insumo"
                       className="form-control"
-                      style={{ width: '55px', padding: '4px 6px', fontSize: '0.8125rem' }}
-                    />
-                  </div>
-
-                  {/* Unit Cost */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>R$/un:</span>
-                    <input
-                      type="number"
-                      step="0.10"
-                      min="0"
-                      value={item.unit_cost || 0}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, unit_cost: val } : ex));
+                      style={{
+                        flex: 1,
+                        padding: '4px 8px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)'
                       }}
-                      className="form-control"
-                      style={{ width: '75px', padding: '4px 6px', fontSize: '0.8125rem' }}
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExtra(item.id)}
+                      className="btn btn-danger btn-icon"
+                      style={{ width: 26, height: 26, flexShrink: 0 }}
+                      title="Remover insumo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
 
-                  {/* Total */}
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', minWidth: '70px', textAlign: 'right' }}>
-                    {formatCurrency((item.unit_cost || 0) * (item.qty || 1))}
-                  </div>
+                  {/* Row 2: Qty, Unit Price and Calculated Subtotal */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qtd:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.qty || 1}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 1;
+                          setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, qty: val } : ex));
+                        }}
+                        className="form-control"
+                        style={{ width: '48px', padding: '3px 4px', fontSize: '0.8125rem', textAlign: 'center' }}
+                      />
+                    </div>
 
-                  {/* Trash */}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExtra(item.id)}
-                    className="btn btn-danger btn-icon"
-                    style={{ width: 28, height: 28 }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>R$/un:</span>
+                      <input
+                        type="number"
+                        step="0.05"
+                        min="0"
+                        value={item.unit_cost || 0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setSelectedExtras(selectedExtras.map((ex, i) => i === idx ? { ...ex, unit_cost: val } : ex));
+                        }}
+                        className="form-control"
+                        style={{ width: '64px', padding: '3px 4px', fontSize: '0.8125rem', textAlign: 'center' }}
+                      />
+                    </div>
+
+                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#00e5ff', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
+                      {formatCurrency((item.unit_cost || 0) * (item.qty || 1))}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1855,24 +1863,27 @@ export function Calculator({
           )}
 
           {/* Indirect Percentage Toggles (Identical to 015041.png) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 1. Montagem */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '10px 14px',
+              padding: '10px 12px',
               background: '#0d1520',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              gap: 8
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🔧</span>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Montagem</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(% sobre custo)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <span style={{ flexShrink: 0 }}>🔧</span>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Montagem</span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>% sobre custo</span>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <input
                   type="number"
                   min="0"
@@ -1880,7 +1891,7 @@ export function Calculator({
                   value={montagemPct}
                   onChange={(e) => setMontagemPct(parseFloat(e.target.value) || 0)}
                   className="form-control"
-                  style={{ width: '60px', padding: '4px 8px', fontSize: '0.8125rem', textAlign: 'center' }}
+                  style={{ width: '48px', padding: '4px 6px', fontSize: '0.8125rem', textAlign: 'center' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>%</span>
                 <button
@@ -1907,18 +1918,21 @@ export function Calculator({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '10px 14px',
+              padding: '10px 12px',
               background: '#0d1520',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              gap: 8
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🏪</span>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Taxa de plataformas</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(% sobre venda)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <span style={{ flexShrink: 0 }}>🏪</span>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Taxa plataformas</span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>% sobre venda</span>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <input
                   type="number"
                   min="0"
@@ -1927,7 +1941,7 @@ export function Calculator({
                   value={platformFeePct}
                   onChange={(e) => setMarketplaceFeePct(parseFloat(e.target.value) || 0)}
                   className="form-control"
-                  style={{ width: '60px', padding: '4px 8px', fontSize: '0.8125rem', textAlign: 'center' }}
+                  style={{ width: '48px', padding: '4px 6px', fontSize: '0.8125rem', textAlign: 'center' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>%</span>
                 <button
@@ -1954,18 +1968,21 @@ export function Calculator({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '10px 14px',
+              padding: '10px 12px',
               background: '#0d1520',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              gap: 8
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>💲</span>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Impostos</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(% sobre venda)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <span style={{ flexShrink: 0 }}>💲</span>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Impostos</span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>% sobre venda</span>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <input
                   type="number"
                   min="0"
@@ -1974,7 +1991,7 @@ export function Calculator({
                   value={taxPct}
                   onChange={(e) => setTaxPct(parseFloat(e.target.value) || 0)}
                   className="form-control"
-                  style={{ width: '60px', padding: '4px 8px', fontSize: '0.8125rem', textAlign: 'center' }}
+                  style={{ width: '48px', padding: '4px 6px', fontSize: '0.8125rem', textAlign: 'center' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>%</span>
                 <button

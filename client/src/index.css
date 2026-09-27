@@ -304,7 +304,7 @@ textarea {
 /* Classic 3-Column Calculator Layout */
 .classic-layout-grid {
   display: grid;
-  grid-template-columns: 270px minmax(380px, 1fr) 350px;
+  grid-template-columns: 270px minmax(360px, 1fr) 370px;
   gap: 16px;
   align-items: start;
 }
