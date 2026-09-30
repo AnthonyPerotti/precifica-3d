@@ -47,6 +47,8 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
   const [showAdvancedConfigs, setShowAdvancedConfigs] = useState(true);
   const [editingDesc, setEditingDesc] = useState(false);
   const [tempDesc, setTempDesc] = useState('');
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [tempCategory, setTempCategory] = useState('');
   const [detailMessage, setDetailMessage] = useState(null);
 
   const modalImageInputRef = useRef(null);
@@ -55,6 +57,7 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [quickForm, setQuickForm] = useState({
     name: '',
+    category: 'Geral',
     weight_g: 20,
     print_time_min: 45,
     material_cost: 2.0,
@@ -101,6 +104,8 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
     setShowAdvancedConfigs(true);
     setEditingDesc(false);
     setTempDesc(product.description || '');
+    setEditingCategory(false);
+    setTempCategory(product.category || 'Geral');
   };
 
   const handleDeleteProduct = async (id, e) => {
@@ -167,6 +172,23 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
     }
   };
 
+  const handleSaveCategory = async () => {
+    if (!selectedProduct) return;
+    try {
+      const newCat = tempCategory.trim() || 'Geral';
+      await api.updateProduct(selectedProduct.id, { category: newCat });
+      const updated = { ...selectedProduct, category: newCat };
+      setSelectedProduct(updated);
+      setProducts(products.map(p => p.id === selectedProduct.id ? updated : p));
+      setEditingCategory(false);
+      setDetailMessage('Categoria atualizada!');
+      setTimeout(() => setDetailMessage(null), 3000);
+      loadProducts();
+    } catch (err) {
+      alert(err.message || 'Erro ao salvar categoria.');
+    }
+  };
+
   const handleQuickCreate = async (e) => {
     e.preventDefault();
     try {
@@ -184,7 +206,7 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
 
       await api.createProduct({
         name: quickForm.name,
-        category: 'Geral',
+        category: quickForm.category?.trim() || 'Geral',
         is_active_in_catalog: 1,
         total_weight_g: weight,
         total_print_time_min: time,
@@ -277,29 +299,31 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
         )}
       </div>
 
-      {/* Category Filter Pills */}
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 20 }}>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setSelectedCategory(cat)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '9999px',
-              border: selectedCategory === cat ? '1px solid #00bcd4' : '1px solid var(--border-color)',
-              background: selectedCategory === cat ? 'rgba(0, 188, 212, 0.2)' : 'var(--bg-card)',
-              color: selectedCategory === cat ? '#00e5ff' : 'var(--text-secondary)',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {/* Category Filter Pills - Só exibe se houver 2 ou mais categorias distintas */}
+      {categories.filter(c => c !== 'Todos').length > 1 && (
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 20 }}>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '9999px',
+                border: selectedCategory === cat ? '1px solid #00bcd4' : '1px solid var(--border-color)',
+                background: selectedCategory === cat ? 'rgba(0, 188, 212, 0.2)' : 'var(--bg-card)',
+                color: selectedCategory === cat ? '#00e5ff' : 'var(--text-secondary)',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Product Cards Grid */}
       {products.length === 0 && !loading ? (
@@ -917,12 +941,87 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
                   bottom: 8,
                   left: 10,
                   fontSize: '0.6875rem',
-                  background: 'rgba(0,0,0,0.65)',
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  color: 'var(--text-muted)'
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(0, 188, 212, 0.3)'
                 }}>
-                  {selectedProduct.category || 'Geral'}
+                  <Tag size={12} color="#00e5ff" />
+                  {!editingCategory ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 600 }}>{selectedProduct.category || 'Geral'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTempCategory(selectedProduct.category || 'Geral');
+                          setEditingCategory(true);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#00e5ff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '1px 3px',
+                          borderRadius: 3
+                        }}
+                        title="Alterar categoria / tag"
+                      >
+                        <Edit2 size={11} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input
+                        type="text"
+                        list="modal-product-cat-list"
+                        value={tempCategory}
+                        onChange={(e) => setTempCategory(e.target.value)}
+                        placeholder="Tag/Categoria"
+                        style={{
+                          background: 'rgba(9, 18, 29, 0.95)',
+                          border: '1px solid #00bcd4',
+                          borderRadius: 4,
+                          color: '#fff',
+                          fontSize: '0.6875rem',
+                          padding: '2px 6px',
+                          width: '120px'
+                        }}
+                        autoFocus
+                      />
+                      <datalist id="modal-product-cat-list">
+                        <option value="Geral" />
+                        <option value="Decoração" />
+                        <option value="Action Figures" />
+                        <option value="Colecionáveis" />
+                        <option value="Peças Técnicas" />
+                        <option value="Utilitários" />
+                        <option value="Brinquedos" />
+                        <option value="Cosplay" />
+                        <option value="Acessórios" />
+                      </datalist>
+                      <button
+                        type="button"
+                        onClick={handleSaveCategory}
+                        style={{ background: '#00bcd4', border: 'none', color: '#000', borderRadius: 3, padding: '2px 7px', fontSize: '0.625rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        OK
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCategory(false)}
+                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1561,6 +1660,28 @@ export function Products({ clientMode, onNavigateToCalculator, onEditProduct, on
               onChange={(e) => setQuickForm({ ...quickForm, name: e.target.value })}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Categoria / Tag (opcional)</label>
+            <input
+              type="text"
+              list="quick-product-cat-list"
+              className="form-control"
+              placeholder="Ex: Decoração, Peças Técnicas (padrão: Geral)"
+              value={quickForm.category || ''}
+              onChange={(e) => setQuickForm({ ...quickForm, category: e.target.value })}
+            />
+            <datalist id="quick-product-cat-list">
+              <option value="Geral" />
+              <option value="Decoração" />
+              <option value="Action Figures" />
+              <option value="Colecionáveis" />
+              <option value="Peças Técnicas" />
+              <option value="Utilitários" />
+              <option value="Brinquedos" />
+              <option value="Cosplay" />
+            </datalist>
           </div>
 
           <div className="form-group">

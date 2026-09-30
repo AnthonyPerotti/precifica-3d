@@ -31,6 +31,12 @@ import { Modal } from '../components/common/Modal.jsx';
 import { Badge } from '../components/common/Badge.jsx';
 import { formatCurrency, formatDate, formatPercent } from '../utils/formatters.js';
 
+const getDefaultValidityDate = (days = 30) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+};
+
 export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProduct }) {
   const [kanban, setKanban] = useState({
     proposta: [],
@@ -80,6 +86,7 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
     payment_status: 'pendente',
     payment_method: 'PIX',
     validity_days: 30,
+    validity_date: getDefaultValidityDate(30),
     delivery_method: 'Entrega',
     shipping_carrier: '',
     is_free_shipping: true,
@@ -315,6 +322,7 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
       payment_status: 'pendente',
       payment_method: 'PIX',
       validity_days: 30,
+      validity_date: getDefaultValidityDate(30),
       delivery_method: 'Entrega',
       shipping_carrier: '',
       is_free_shipping: true,
@@ -369,10 +377,11 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
       payment_status: order.payment_status || 'pendente',
       payment_method: order.payment_method || 'PIX',
       validity_days: order.validity_days || 30,
+      validity_date: order.validity_date || (order.created_at ? new Date(new Date(order.created_at).getTime() + (order.validity_days || 30) * 86400000).toISOString().split('T')[0] : getDefaultValidityDate(30)),
       delivery_method: order.delivery_method || 'Entrega',
       shipping_carrier: order.shipping_carrier || '',
-      is_free_shipping: order.is_free_shipping ?? true,
-      shipping_cost: order.shipping_cost || 0,
+      is_free_shipping: order.is_free_shipping === 1 || order.is_free_shipping === true,
+      shipping_cost: Number(order.shipping_cost) || 0,
       due_date: order.due_date || '',
       discount_pct: order.discount_pct || 0,
       discount_value: order.discount_value || 0,
@@ -496,8 +505,12 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
   const handleSaveOrder = async (e) => {
     e.preventDefault();
     try {
+      const effectiveShippingCost = (!orderForm.is_free_shipping && orderForm.delivery_method === 'Entrega')
+        ? (Number(orderForm.shipping_cost) || 0)
+        : 0;
       const payload = {
         ...orderForm,
+        shipping_cost: effectiveShippingCost,
         subtotal,
         total,
         estimated_cost: cost,
@@ -696,19 +709,28 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
           onClick={() => {
             setActiveOrder(null);
             setOrderForm({
+              customer_id: null,
               customer_name: '',
+              customer_document: '',
               customer_phone: '',
               customer_email: '',
+              customer_address: '',
               notes: '',
               status: 'proposta',
               payment_status: 'pendente',
               payment_method: 'PIX',
               validity_days: 30,
+              validity_date: getDefaultValidityDate(30),
               delivery_method: 'A combinar',
+              shipping_carrier: '',
+              is_free_shipping: true,
+              shipping_cost: 0,
+              due_date: '',
               discount_pct: 0,
               discount_value: 0,
               items: []
             });
+            setEditingCustomerManual(false);
             setOrderModalOpen(true);
           }}
           className="btn btn-primary"
@@ -836,7 +858,39 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                         borderTop: '1px solid var(--border-color)',
                         paddingTop: 10
                       }}>
-                        <Badge status={order.status} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Badge status={order.status} />
+                          <button
+                            type="button"
+                            title="Imprimir Proposta Comercial"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPrintQuote(order);
+                            }}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: 'var(--radius-sm)',
+                              padding: '4px 6px',
+                              color: 'var(--text-muted)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#00e5ff';
+                              e.currentTarget.style.borderColor = '#00bcd4';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'var(--text-muted)';
+                              e.currentTarget.style.borderColor = 'var(--border-color)';
+                            }}
+                          >
+                            <Printer size={13} />
+                          </button>
+                        </div>
                         <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#00e5ff', fontFamily: 'var(--font-mono)' }}>
                           {formatCurrency(order.total)}
                         </span>
@@ -1548,29 +1602,71 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
               </div>
             </div>
 
-            {/* 5. SEÇÃO PREVISÃO DE CONCLUSÃO */}
+            {/* 5. SEÇÃO PRAZOS & PAGAMENTO */}
             <div style={{
               background: '#0d1726',
               padding: '14px 16px',
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-color)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
                 <Clock size={14} color="#00bcd4" />
-                <span>PREVISÃO DE CONCLUSÃO</span>
+                <span>PRAZOS & PAGAMENTO</span>
               </div>
 
-              <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
-                  <Calendar size={14} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                {/* Previsão de Conclusão */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.6875rem' }}>PREVISÃO DE CONCLUSÃO</label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                      <Calendar size={14} />
+                    </div>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={orderForm.due_date || ''}
+                      onChange={(e) => setOrderForm({ ...orderForm, due_date: e.target.value })}
+                      style={{ paddingLeft: 36, fontSize: '0.8125rem' }}
+                    />
+                  </div>
                 </div>
-                <input
-                  type="date"
+
+                {/* Validade da Proposta */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.6875rem' }}>VALIDADE DA PROPOSTA</label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                      <Calendar size={14} />
+                    </div>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={orderForm.validity_date || ''}
+                      onChange={(e) => setOrderForm({ ...orderForm, validity_date: e.target.value })}
+                      style={{ paddingLeft: 36, fontSize: '0.8125rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Forma de Pagamento */}
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.6875rem' }}>FORMA DE PAGAMENTO</label>
+                <select
                   className="form-control"
-                  value={orderForm.due_date || ''}
-                  onChange={(e) => setOrderForm({ ...orderForm, due_date: e.target.value })}
-                  style={{ paddingLeft: 36, fontSize: '0.8125rem' }}
-                />
+                  value={orderForm.payment_method || 'PIX'}
+                  onChange={(e) => setOrderForm({ ...orderForm, payment_method: e.target.value })}
+                  style={{ fontSize: '0.8125rem' }}
+                >
+                  <option value="PIX">PIX</option>
+                  <option value="Cartão de Crédito">Cartão de Crédito</option>
+                  <option value="Cartão de Débito">Cartão de Débito</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Transferência Bancária">Transferência Bancária</option>
+                  <option value="A combinar">A combinar</option>
+                </select>
               </div>
             </div>
 
@@ -1712,12 +1808,12 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Valor: R$</span>
                         <input
                           type="number"
-                          step="0.5"
+                          step="0.01"
                           min="0"
                           className="form-control"
                           placeholder="0,00"
-                          value={orderForm.shipping_cost || 0}
-                          onChange={(e) => setOrderForm({ ...orderForm, shipping_cost: parseFloat(e.target.value) || 0 })}
+                          value={orderForm.shipping_cost !== undefined && orderForm.shipping_cost !== null ? orderForm.shipping_cost : ''}
+                          onChange={(e) => setOrderForm({ ...orderForm, shipping_cost: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 })}
                           style={{ fontSize: '0.8125rem', width: 90 }}
                         />
                       </div>
@@ -2221,7 +2317,9 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                             Validade
                           </td>
                           <td style={{ padding: '7px 10px', color: '#1e293b', textAlign: 'center' }}>
-                            {new Date(Date.now() + (printQuote.validity_days || 30) * 86400000).toLocaleDateString('pt-BR')}
+                            {printQuote.validity_date
+                              ? new Date(printQuote.validity_date + 'T12:00:00').toLocaleDateString('pt-BR')
+                              : new Date(Date.now() + (printQuote.validity_days || 30) * 86400000).toLocaleDateString('pt-BR')}
                           </td>
                         </tr>
                       </tbody>
@@ -2309,7 +2407,9 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                           {formatCurrency(printQuote.subtotal || printQuote.total)}
                         </td>
                         <td style={{ padding: '8px', borderRight: '1px solid #cbd5e1' }}>
-                          R$ 0,00
+                          {printQuote.delivery_method === 'Entrega' && !printQuote.is_free_shipping && Number(printQuote.shipping_cost) > 0
+                            ? formatCurrency(printQuote.shipping_cost)
+                            : 'Grátis'}
                         </td>
                         <td style={{ padding: '8px', borderRight: '1px solid #cbd5e1' }}>
                           {formatCurrency(printQuote.discount_value || 0)}
@@ -2337,9 +2437,34 @@ export function Orders({ clientMode, initialNewOrderProduct, onClearInitialProdu
                     color: '#475569',
                     marginBottom: 20
                   }}>
-                    {printQuote.payment_method && <div><strong>Pagamento:</strong> {printQuote.payment_method}</div>}
-                    {printQuote.delivery_method && <div><strong>Entrega:</strong> {printQuote.delivery_method}</div>}
-                    {printQuote.notes && <div style={{ marginTop: 4 }}><strong>Observações:</strong> {printQuote.notes}</div>}
+                    {printQuote.payment_method && (
+                      <div style={{ marginBottom: 4 }}>
+                        <strong>Pagamento:</strong> {printQuote.payment_method}
+                      </div>
+                    )}
+                    {printQuote.delivery_method && (
+                      <div style={{ marginBottom: printQuote.notes ? 4 : 0 }}>
+                        <strong>Entrega:</strong>{' '}
+                        {printQuote.delivery_method === 'Entrega' ? (
+                          <span>
+                            Entrega
+                            {printQuote.shipping_carrier ? ` via ${printQuote.shipping_carrier}` : ''}
+                            {printQuote.is_free_shipping
+                              ? ' — Frete Grátis'
+                              : Number(printQuote.shipping_cost) > 0
+                              ? ` — Frete: ${formatCurrency(printQuote.shipping_cost)}`
+                              : ''}
+                          </span>
+                        ) : (
+                          <span>{printQuote.delivery_method}</span>
+                        )}
+                      </div>
+                    )}
+                    {printQuote.notes && (
+                      <div style={{ marginTop: 4 }}>
+                        <strong>Observações:</strong> {printQuote.notes}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

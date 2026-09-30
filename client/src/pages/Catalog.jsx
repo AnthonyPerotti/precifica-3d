@@ -360,8 +360,8 @@ export function Catalog({ onBackToDashboard, isEmbedded = false }) {
         </div>
         )}
 
-        {/* Category Pills */}
-        {categories.length > 1 && catalogConfig.showCategories !== false && (
+        {/* Category Pills - Só exibe se houver 2 ou mais categorias distintas cadastradas */}
+        {categories.filter(c => c !== 'Todos').length > 1 && catalogConfig.showCategories !== false && (
           <div style={{
             display: 'flex',
             alignItems: 'center',

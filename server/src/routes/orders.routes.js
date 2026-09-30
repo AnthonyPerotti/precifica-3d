@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
   const { period, search, status } = req.query;
 
   let query = `
-    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email
+    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email, c.address as customer_address, c.document as customer_document
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     WHERE 1=1
@@ -89,7 +89,11 @@ router.post('/', (req, res) => {
     payment_status,
     payment_method,
     validity_days,
+    validity_date,
     delivery_method,
+    shipping_carrier,
+    is_free_shipping,
+    shipping_cost,
     notes,
     discount_pct,
     discount_value,
@@ -126,9 +130,10 @@ router.post('/', (req, res) => {
   const stmt = db.prepare(`
     INSERT INTO orders (
       code, customer_id, status, payment_status, payment_method,
-      validity_days, delivery_method, notes, discount_pct, discount_value,
+      validity_days, validity_date, delivery_method, shipping_carrier,
+      is_free_shipping, shipping_cost, notes, discount_pct, discount_value,
       subtotal, total, estimated_cost, estimated_net_profit, due_date, items_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -138,7 +143,11 @@ router.post('/', (req, res) => {
     payment_status || 'pendente',
     payment_method || 'PIX',
     validity_days || 30,
+    validity_date || null,
     delivery_method || 'A combinar',
+    shipping_carrier || '',
+    is_free_shipping === false || is_free_shipping === 0 ? 0 : 1,
+    Number(shipping_cost) || 0,
     notes || '',
     discount_pct || 0,
     discount_value || 0,
@@ -151,7 +160,7 @@ router.post('/', (req, res) => {
   );
 
   const created = db.prepare(`
-    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email
+    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email, c.address as customer_address, c.document as customer_document
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     WHERE o.id = ?
@@ -198,7 +207,11 @@ router.put('/:id', (req, res) => {
     payment_status,
     payment_method,
     validity_days,
+    validity_date,
     delivery_method,
+    shipping_carrier,
+    is_free_shipping,
+    shipping_cost,
     notes,
     discount_pct,
     discount_value,
@@ -216,7 +229,11 @@ router.put('/:id', (req, res) => {
       payment_status = COALESCE(?, payment_status),
       payment_method = COALESCE(?, payment_method),
       validity_days = COALESCE(?, validity_days),
+      validity_date = COALESCE(?, validity_date),
       delivery_method = COALESCE(?, delivery_method),
+      shipping_carrier = COALESCE(?, shipping_carrier),
+      is_free_shipping = COALESCE(?, is_free_shipping),
+      shipping_cost = COALESCE(?, shipping_cost),
       notes = COALESCE(?, notes),
       discount_pct = COALESCE(?, discount_pct),
       discount_value = COALESCE(?, discount_value),
@@ -235,7 +252,11 @@ router.put('/:id', (req, res) => {
     payment_status,
     payment_method,
     validity_days,
+    validity_date,
     delivery_method,
+    shipping_carrier,
+    is_free_shipping !== undefined ? (is_free_shipping ? 1 : 0) : null,
+    shipping_cost !== undefined ? Number(shipping_cost) : null,
     notes,
     discount_pct,
     discount_value,
@@ -249,7 +270,7 @@ router.put('/:id', (req, res) => {
   );
 
   const updated = db.prepare(`
-    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email
+    SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.email as customer_email, c.address as customer_address, c.document as customer_document
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     WHERE o.id = ?

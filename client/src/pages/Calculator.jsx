@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Upload,
   Camera,
+  Tag,
   X
 } from 'lucide-react';
 import { api } from '../api/client.js';
@@ -926,7 +927,7 @@ export function Calculator({
       />
 
       {/* Name input */}
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 10 }}>
         <input
           type="text"
           placeholder="Nome do produto"
@@ -939,6 +940,48 @@ export function Calculator({
             background: 'rgba(14, 22, 34, 0.6)'
           }}
         />
+      </div>
+
+      {/* Category / Tag input */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            position: 'absolute',
+            left: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'var(--text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            pointerEvents: 'none'
+          }}>
+            <Tag size={14} />
+          </div>
+          <input
+            type="text"
+            list="product-categories-datalist"
+            placeholder="Categoria / Tag (ex: Decoração, Peças Técnicas, Colecionáveis...)"
+            value={productCategory}
+            onChange={(e) => setProductCategory(e.target.value)}
+            className="form-control"
+            style={{
+              paddingLeft: 32,
+              fontSize: '0.8125rem',
+              background: 'rgba(14, 22, 34, 0.5)'
+            }}
+          />
+          <datalist id="product-categories-datalist">
+            <option value="Geral" />
+            <option value="Decoração" />
+            <option value="Action Figures" />
+            <option value="Colecionáveis" />
+            <option value="Peças Técnicas" />
+            <option value="Utilitários" />
+            <option value="Brinquedos" />
+            <option value="Cosplay" />
+            <option value="Acessórios" />
+          </datalist>
+        </div>
       </div>
 
       {/* Description textarea */}
@@ -2579,17 +2622,46 @@ export function Calculator({
                     borderColor: productName ? 'rgba(0, 188, 212, 0.4)' : 'var(--border-color)'
                   }}
                 />
-                <input
-                  type="text"
-                  placeholder="Descrição (opcional)"
-                  value={productDesc}
-                  onChange={(e) => setProductDesc(e.target.value)}
-                  className="form-control"
-                  style={{
-                    fontSize: '0.8125rem',
-                    background: 'rgba(14, 22, 34, 0.4)'
-                  }}
-                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      left: 10,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      pointerEvents: 'none'
+                    }}>
+                      <Tag size={13} />
+                    </div>
+                    <input
+                      type="text"
+                      list="product-categories-datalist"
+                      placeholder="Categoria / Tag (ex: Decoração)"
+                      value={productCategory}
+                      onChange={(e) => setProductCategory(e.target.value)}
+                      className="form-control"
+                      style={{
+                        paddingLeft: 30,
+                        fontSize: '0.8125rem',
+                        background: 'rgba(14, 22, 34, 0.4)'
+                      }}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Descrição (opcional)"
+                    value={productDesc}
+                    onChange={(e) => setProductDesc(e.target.value)}
+                    className="form-control"
+                    style={{
+                      fontSize: '0.8125rem',
+                      background: 'rgba(14, 22, 34, 0.4)'
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

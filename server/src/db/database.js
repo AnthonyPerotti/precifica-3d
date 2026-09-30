@@ -165,7 +165,11 @@ function initDatabase(database) {
       payment_status TEXT DEFAULT 'pendente',
       payment_method TEXT DEFAULT 'PIX',
       validity_days INTEGER DEFAULT 30,
+      validity_date TEXT,
       delivery_method TEXT DEFAULT 'A combinar',
+      shipping_carrier TEXT DEFAULT '',
+      is_free_shipping INTEGER DEFAULT 1,
+      shipping_cost REAL DEFAULT 0,
       notes TEXT,
       discount_pct REAL DEFAULT 0,
       discount_value REAL DEFAULT 0,
@@ -238,6 +242,22 @@ function runMigrations(database) {
         console.error("Migration error on products.is_active_in_catalog:", e.message);
       }
     }
+
+    // Migration for orders
+    const orderColumns = database.prepare("PRAGMA table_info(orders)").all().map(c => c.name);
+    const addOrderCol = (colName, colDef) => {
+      if (!orderColumns.includes(colName)) {
+        try {
+          database.exec(`ALTER TABLE orders ADD COLUMN ${colName} ${colDef};`);
+        } catch (e) {
+          console.error(`Migration error on orders.${colName}:`, e.message);
+        }
+      }
+    };
+    addOrderCol('validity_date', 'TEXT');
+    addOrderCol('shipping_carrier', "TEXT DEFAULT ''");
+    addOrderCol('is_free_shipping', 'INTEGER DEFAULT 1');
+    addOrderCol('shipping_cost', 'REAL DEFAULT 0');
   } catch (err) {
     console.error('Error running migrations:', err.message);
   }
